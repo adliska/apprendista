@@ -11,7 +11,7 @@ classdef ffn < handle
         function nn = ffn(Architecture, ActFuncts)
             nn.Architecture = Architecture;
             nn.ActFuncts = ActFuncts;
-        end
+        end % constructor
 
         function randomInitialize(nn)
             for layer = 2:numel(nn.Architecture)
@@ -19,16 +19,19 @@ classdef ffn < handle
                     nn.Architecture(layer));
                 nn.Biases{layer} = 0.1*rand(1, nn.Architecture(layer));
             end
-        end
+        end % randomInitialize
 
         function train(nn, input, target, opts)
             for epoch = 1:opts.numepochs
                 output = nn.forwardpass(input);
+                
                 dEdy = - (target - output);
                 error = sum(sum((target-output).^2)) / size(input, 1);
-                fprintf('Before epoch %d, total error %f \n', epoch, error);
                 
+                fprintf('Before epoch %d, total error %f \n', epoch, error);
                 numcases = size(input, 1);
+                
+                % Derivatives of final-layer units
                 layer = numel(nn.Architecture);
                 dEdz = {};
                 switch nn.ActFuncts(layer)
@@ -39,6 +42,7 @@ classdef ffn < handle
                         dEdz{layer} = dEdy;
                 end
                 
+                % Backpropagation of derivatives
                 for layer = numel(nn.Architecture)-1:-1:2
                     dEdz{layer} = dEdz{layer+1} * nn.Weights{layer+1}';
                     switch(nn.ActFuncts(layer))
@@ -48,19 +52,19 @@ classdef ffn < handle
                     end
                 end
 
-                dEdw = {};
-                dB = {};
+                % Gradient descent
                 for layer = 2:numel(nn.Weights)
-                    dEdw{layer} = nn.Activations{layer-1}' * dEdz{layer} / numcases;
-                    dB{layer} = sum(dEdz{layer}) / numcases;
-                end
-
-                for layer = 2:numel(nn.Weights)
+                    % Adjust weights                    
+                    dEdw = nn.Activations{layer-1}' * dEdz{layer} / numcases;
                     nn.Weights{layer} = nn.Weights{layer} - ...
-                        opts.learningRate*dEdw{layer};
+                        opts.learningRate*dEdw;
+                    
+                    % Adjust biases
+                    dB = sum(dEdz{layer}) / numcases;
                     nn.Biases{layer} = nn.Biases{layer} - ...
-                        opts.learningRate*dB{layer};
-                end
+                        opts.learningRate*dB;
+                end % gradient descent
+
             end % epoch loop
             
             function popts = parseOptions(opts)
@@ -95,7 +99,6 @@ classdef ffn < handle
                 end
             end
             output = nn.Activations{end};
-        end  
+        end % forwardpass 
     end %methods
-
 end %classdef
