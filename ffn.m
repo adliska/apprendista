@@ -1,6 +1,6 @@
 classdef ffn < handle
     properties
-        Architecture
+        LayerSizes
         ActFuncts
         Weights = {}
         Biases = {}
@@ -8,16 +8,16 @@ classdef ffn < handle
     end %properties
 
     methods
-        function nn = ffn(Architecture, ActFuncts)
-            nn.Architecture = Architecture;
+        function nn = ffn(LayerSizes, ActFuncts)
+            nn.LayerSizes = LayerSizes;
             nn.ActFuncts = ActFuncts;
         end % constructor
 
         function randomInitialize(nn)
-            for layer = 2:numel(nn.Architecture)
-                nn.Weights{layer} = 0.1*rand(nn.Architecture(layer-1), ...
-                    nn.Architecture(layer));
-                nn.Biases{layer} = 0.1*rand(1, nn.Architecture(layer));
+            for layer = 2:numel(nn.LayerSizes)
+                nn.Weights{layer} = 0.1*rand(nn.LayerSizes(layer-1), ...
+                    nn.LayerSizes(layer));
+                nn.Biases{layer} = 0.1*rand(1, nn.LayerSizes(layer));
             end
         end % randomInitialize
 
@@ -32,7 +32,7 @@ classdef ffn < handle
                 numcases = size(input, 1);
                 
                 % Derivatives of final-layer units
-                layer = numel(nn.Architecture);
+                layer = numel(nn.LayerSizes);
                 dEdz = {};
                 switch nn.ActFuncts(layer)
                     case AF.Sigmoid
@@ -43,7 +43,7 @@ classdef ffn < handle
                 end
                 
                 % Backpropagation of derivatives
-                for layer = numel(nn.Architecture)-1:-1:2
+                for layer = numel(nn.LayerSizes)-1:-1:2
                     dEdz{layer} = dEdz{layer+1} * nn.Weights{layer+1}';
                     switch(nn.ActFuncts(layer))
                         case AF.Sigmoid

@@ -1,16 +1,16 @@
 classdef rbm < handle
     properties
         LayerSizes = [] % 1.visible, 2.hidden
-        ActivationFunctions = []
+        ActFuncts = []
         Weights = []
         Biases = {}
         Activations = {}
     end %properties
 
     methods
-        function rbm = rbm(LayerSizes, ActivationFunctions)
+        function rbm = rbm(LayerSizes, ActFuncts)
             rbm.LayerSizes = LayerSizes;
-            rbm.ActivationFunctions = ActivationFunctions;
+            rbm.ActFuncts = ActFuncts;
         end %constructor
 
         function randomInitialize(rbm)
@@ -48,7 +48,7 @@ classdef rbm < handle
                     h0 = h0probs > rand(numcases,rbm.LayerSizes(2));
                     
                     % Negative phase
-                    switch(rbm.ActivationFunctions(1))
+                    switch rbm.ActFuncts(1)
                         case AF.Sigmoid
                             v1 = 1./(1 + exp(bsxfun(@minus,-h0*rbm.Weights', rbm.Biases{1})));
                         case AF.Linear
