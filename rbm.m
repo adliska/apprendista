@@ -4,7 +4,7 @@ classdef rbm < handle
         ActFuncts = []
         Weights = []
         Biases = {}
-        Activations = {}
+        Activations = []
     end %properties
 
     methods
@@ -52,7 +52,7 @@ classdef rbm < handle
                         case AF.Sigmoid
                             v1 = 1./(1 + exp(bsxfun(@minus,-h0*rbm.Weights', rbm.Biases{1})));
                         case AF.Linear
-                            v1 = bsxfun(@minus, h0*rbm.Weights', rbm.Biases{1});
+                            v1 = bsxfun(@plus, h0*rbm.Weights', rbm.Biases{1});
                     end
                     h1probs = 1./(1 + exp(bsxfun(@minus, -v1*rbm.Weights, rbm.Biases{2})));
                     vh1  = v1'*h1probs;
