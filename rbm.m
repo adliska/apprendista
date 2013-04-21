@@ -26,6 +26,7 @@ classdef rbm < handle
 
             numcases = size(input, 1);
             numbatches = size(input, 3);
+            rbm.Activations = zeros(numcases, rbm.LayerSizes(2), numbatches);
             
             h0probs = zeros(numcases,rbm.LayerSizes(2));
             h1probs = zeros(numcases,rbm.LayerSizes(2));
@@ -56,6 +57,9 @@ classdef rbm < handle
                             % Adding Gaussian noise
                             h0 = h0probs + randn(numcases, rbm.LayerSizes(2));
                     end
+                    % Saving probabilities of hidden units (used in dae's)
+                    rbm.Activations(:, :, batch) = h0probs;
+                    % Learning statistics for positive phase
                     vh0 = v0' * h0probs;
                                         
                     % Negative phase - visible units reconstruction
@@ -75,6 +79,7 @@ classdef rbm < handle
                             h1probs = bsxfun(@plus, ...
                                 v1*rbm.Weights, rbm.Biases{2});
                     end
+                    % Learning statistics for negative phase
                     vh1  = v1'*h1probs;
                     
                     % Reconstruction error
