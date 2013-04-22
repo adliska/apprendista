@@ -1,5 +1,5 @@
 classdef AF
-	properties
+    properties
         desc
     end % properties
 
@@ -10,7 +10,7 @@ classdef AF
     end % methods
     
     enumeration
-		Linear('linear')
+        Linear('linear')
         Sigmoid('sigmoid')
-	end % enumeration
+    end % enumeration
 end
