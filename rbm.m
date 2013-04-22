@@ -55,43 +55,19 @@ classdef rbm < handle
                     % Positive phrase - visible units
                     v0 = input(:,:,batch);
                     % Positive phase - hidden units
-                    switch rbm.ActFuncts(2)
-                        case AF.Sigmoid
-                            h0probs = 1./(1 + exp(bsxfun(@minus, ...
-                                -v0*rbm.Weights, rbm.Biases{2})));
-                            % Binarising hidden states
-                            h0 = h0probs > rand(numcases,rbm.LayerSizes(2));
-                        case AF.Linear
-                            h0probs = bsxfun(@plus, ...
-                                v0*rbm.Weights, rbm.Biases{2});
-                            % Adding Gaussian noise
-                            h0 = h0probs + randn(numcases, rbm.LayerSizes(2));
-                    end
+                    [h0probs, h0] = rbm.updateHidden(v0);
                     % Saving probabilities of hidden units (used in dae's)
                     activations(:, :, batch) = h0probs;
                     % Learning statistics for positive phase
                     vh0 = v0' * h0probs;
                                         
                     % Negative phase - visible units reconstruction
-                    switch rbm.ActFuncts(1)
-                        case AF.Sigmoid
-                            v1 = 1./(1 + exp(bsxfun(@minus, ...
-                                -h0*rbm.Weights', rbm.Biases{1})));
-                        case AF.Linear
-                            v1 = bsxfun(@plus, h0*rbm.Weights', rbm.Biases{1});
-                    end
+                    v1 = rbm.updateVisible(h0);
                     % Negative phase - hidden units
-                    switch rbm.ActFuncts(2)
-                        case AF.Sigmoid
-                            h1probs = 1./(1 + exp(bsxfun(@minus, ...
-                                -v1*rbm.Weights, rbm.Biases{2})));
-                        case AF.Linear
-                            h1probs = bsxfun(@plus, ...
-                                v1*rbm.Weights, rbm.Biases{2});
-                    end
+                    [h1probs, ~] = rbm.updateHidden(v1);
                     % Learning statistics for negative phase
                     vh1  = v1'*h1probs;
-                    
+
                     % Reconstruction error
                     err = sum(sum((v0-v1).^2 ));
                     errsum = errsum + err;
@@ -135,6 +111,35 @@ classdef rbm < handle
             end; % parseOptions
     
         end %train
+
+        function [hprobs, h] = updateHidden(rbm, v)
+            switch rbm.ActFuncts(2)
+                case AF.Sigmoid
+                    hprobs = 1./(1 + exp(bsxfun(@minus, ...
+                        -v*rbm.Weights, rbm.Biases{2})));
+                    % Binarising hidden states
+                    h = hprobs > rand(size(hprobs, 1), ...
+                        rbm.LayerSizes(2));
+                case AF.Linear
+                    hprobs = bsxfun(@plus, ...
+                        v*rbm.Weights, rbm.Biases{2});
+                    % Adding Gaussian noise
+                    h = hprobs + randn(size(hprobs,1), ...
+                        rbm.LayerSizes(2));
+            end
+        end % updateHidden
+            
+        function v = updateVisible(rbm, h)
+            switch rbm.ActFuncts(1)
+                case AF.Sigmoid
+                    v = 1./(1 + exp(bsxfun(@minus, ...
+                        -h*rbm.Weights', rbm.Biases{1})));
+                case AF.Linear
+                    v = bsxfun(@plus, h*rbm.Weights', rbm.Biases{1});
+            end
+        end % updateVisible
+
+
     end %methods
 
 end %class
