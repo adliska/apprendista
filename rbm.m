@@ -21,12 +21,21 @@ classdef rbm < handle
             rbm.Biases{2} = zeros(1, rbm.LayerSizes(2));
         end %initialize
 
-        function train(rbm, input, opts)
+        function activations = train(rbm, input, opts)
             opts = parseOptions(opts);
 
             numcases = size(input, 1);
             numbatches = size(input, 3);
-            rbm.Activations = zeros(numcases, rbm.LayerSizes(2), numbatches);
+            
+            fprintf('Training RBM %d-%d, %s-%s\n', ...
+               rbm.LayerSizes(1), rbm.LayerSizes(2), ...
+               rbm.ActFuncts(1).desc, rbm.ActFuncts(2).desc);
+            fprintf(['learningRate: %s\n', ...
+               'weightCost: %.4f\nmomentum:%s\n'], ...
+               sprintf('%.4f ', opts.learningRate), opts.weightCost, ...
+               sprintf('%.4f ', opts.momentum));
+            fprintf(1, 'size(input): %d x %d x %d', ...
+                size(input));
             
             h0probs = zeros(numcases,rbm.LayerSizes(2));
             h1probs = zeros(numcases,rbm.LayerSizes(2));
@@ -35,9 +44,10 @@ classdef rbm < handle
             dWeights = zeros(size(rbm.Weights));
             dVisBiases = zeros(size(rbm.Biases{1}));
             dHidBiases = zeros(size(rbm.Biases{2}));
+            activations = zeros(numcases, rbm.LayerSizes(2), numbatches);
 
             for epoch = 1:opts.numepochs
-                fprintf(1,'epoch %d\r',epoch); 
+                fprintf(1,'\nepoch %d ************************\n',epoch);
                 errsum = 0;
                 for batch = 1:numbatches
                     fprintf(1,'epoch %d batch %d ',epoch,batch);
@@ -58,7 +68,7 @@ classdef rbm < handle
                             h0 = h0probs + randn(numcases, rbm.LayerSizes(2));
                     end
                     % Saving probabilities of hidden units (used in dae's)
-                    rbm.Activations(:, :, batch) = h0probs;
+                    activations(:, :, batch) = h0probs;
                     % Learning statistics for positive phase
                     vh0 = v0' * h0probs;
                                         
@@ -100,11 +110,12 @@ classdef rbm < handle
 
                     % Update biases of hidden units
                     dHidBiases = opts.momentum(epoch)*dHidBiases + ...
-                        (opts.learningRate(epoch)/numcases)*(sum(h0probs)-sum(h1probs));
+                        (opts.learningRate(epoch)/numcases) * ...
+                        (sum(h0probs)-sum(h1probs));
                     rbm.Biases{2} = rbm.Biases{2} + dHidBiases;
                 end % batch
                 
-                fprintf(1, '\nepoch %4i error %6.1f  \n', epoch, errsum);
+                fprintf(1, '\nepoch %d error %.1f\n', epoch, errsum);
             end; % epoch
 
             function popts = parseOptions(opts)
